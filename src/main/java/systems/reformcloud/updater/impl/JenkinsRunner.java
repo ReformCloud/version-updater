@@ -45,55 +45,55 @@ import java.util.regex.Pattern;
 @Runner.DefaultRunner
 public class JenkinsRunner implements Runner {
 
-    @Override
-    public void run(@NotNull RunnerConfiguration configuration) {
-        var jobUrl = configuration.getRunnerData().get("jobUrl").getAsString();
-        var rev = configuration.getRunnerData().get("rev").getAsString();
-        var pattern = Pattern.compile(configuration.getRunnerData().get("pattern").getAsString());
+  @Override
+  public void run(@NotNull RunnerConfiguration configuration) {
+    var jobUrl = configuration.getRunnerData().get("jobUrl").getAsString();
+    var rev = configuration.getRunnerData().get("rev").getAsString();
+    var pattern = Pattern.compile(configuration.getRunnerData().get("pattern").getAsString());
 
-        HttpUtils.openConnection(jobUrl + "/" + rev + "/api/json", inputStream -> {
-            try (var reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
-                JsonObject jsonObject = JsonParser.parseReader(reader).getAsJsonObject();
-                List<Artifact> artifacts = Constants.GSON.get().fromJson(jsonObject.get("artifacts"), TypeToken.getParameterized(List.class, Artifact.class).getType());
+    HttpUtils.openConnection(jobUrl + "/" + rev + "/api/json", inputStream -> {
+      try (var reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
+        JsonObject jsonObject = JsonParser.parseReader(reader).getAsJsonObject();
+        List<Artifact> artifacts = Constants.GSON.get().fromJson(jsonObject.get("artifacts"), TypeToken.getParameterized(List.class, Artifact.class).getType());
 
-                if (artifacts.isEmpty()) {
-                    System.err.println("Unable to load artifacts of last jenkins build from " + jobUrl);
-                    return;
-                }
-
-                for (Artifact artifact : artifacts) {
-                    var matcher = pattern.matcher(artifact.fileName);
-                    if (matcher.matches()) {
-                        this.handleArtifactFound(artifact, matcher, jobUrl, rev, configuration.getTargetPath());
-                        return;
-                    }
-                }
-
-                System.err.println("Unable to find matching artifact for " + pattern + " @ " + jobUrl);
-            } catch (IOException exception) {
-                exception.printStackTrace();
-            }
-        });
-    }
-
-    private void handleArtifactFound(@NotNull Artifact artifact, @NotNull Matcher matcher, @NotNull String jobUrl, @NotNull String rev, @NotNull String target) {
-        List<String> list = new ArrayList<>();
-        for (int i = 1; i <= matcher.groupCount(); i++) {
-            list.add(matcher.group(i));
+        if (artifacts.isEmpty()) {
+          System.err.println("Unable to load artifacts of last jenkins build from " + jobUrl);
+          return;
         }
 
-        target = MessageFormat.format(target, list.toArray(Object[]::new));
-        HttpUtils.download(jobUrl + "/" + rev + "/artifact/" + artifact.relativePath, target);
-    }
-
-    private static final class Artifact {
-
-        private final String fileName;
-        private final String relativePath;
-
-        private Artifact(String fileName, String relativePath) {
-            this.fileName = fileName;
-            this.relativePath = relativePath;
+        for (Artifact artifact : artifacts) {
+          var matcher = pattern.matcher(artifact.fileName);
+          if (matcher.matches()) {
+            this.handleArtifactFound(artifact, matcher, jobUrl, rev, configuration.getTargetPath());
+            return;
+          }
         }
+
+        System.err.println("Unable to find matching artifact for " + pattern + " @ " + jobUrl);
+      } catch (IOException exception) {
+        exception.printStackTrace();
+      }
+    });
+  }
+
+  private void handleArtifactFound(@NotNull Artifact artifact, @NotNull Matcher matcher, @NotNull String jobUrl, @NotNull String rev, @NotNull String target) {
+    List<String> list = new ArrayList<>();
+    for (int i = 1; i <= matcher.groupCount(); i++) {
+      list.add(matcher.group(i));
     }
+
+    target = MessageFormat.format(target, list.toArray(Object[]::new));
+    HttpUtils.download(jobUrl + "/" + rev + "/artifact/" + artifact.relativePath, target);
+  }
+
+  private static final class Artifact {
+
+    private final String fileName;
+    private final String relativePath;
+
+    private Artifact(String fileName, String relativePath) {
+      this.fileName = fileName;
+      this.relativePath = relativePath;
+    }
+  }
 }

@@ -31,15 +31,15 @@ import java.util.concurrent.TimeUnit;
 
 public class VersionsUpdater {
 
-    public static void main(String[] args) throws InterruptedException {
-        System.out.println("Launching version updater v" + VersionsUpdater.class.getPackage().getImplementationVersion() + "...");
+  public static void main(String[] args) throws InterruptedException {
+    System.out.println("Launching version updater v" + VersionsUpdater.class.getPackage().getImplementationVersion() + "...");
 
-        var executor = Executors.newCachedThreadPool();
-        VersionUpdaterConfiguration.loadAndRun(executor);
+    var executor = Executors.newCachedThreadPool();
+    VersionUpdaterConfiguration.loadAndRun(executor);
 
-        executor.shutdown();
-        executor.awaitTermination(1, TimeUnit.DAYS);
+    executor.shutdown();
+    executor.awaitTermination(1, TimeUnit.DAYS);
 
-        System.out.println("All updates were done! Thank you and goodbye");
-    }
+    System.out.println("All updates were done! Thank you and goodbye");
+  }
 }

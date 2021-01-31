@@ -29,9 +29,9 @@ import com.google.gson.GsonBuilder;
 
 public final class Constants {
 
-    private Constants() {
-        throw new UnsupportedOperationException();
-    }
+  public static final ThreadLocal<Gson> GSON = ThreadLocal.withInitial(() -> new GsonBuilder().serializeNulls().disableHtmlEscaping().create());
 
-    public static final ThreadLocal<Gson> GSON = ThreadLocal.withInitial(() -> new GsonBuilder().serializeNulls().disableHtmlEscaping().create());
+  private Constants() {
+    throw new UnsupportedOperationException();
+  }
 }

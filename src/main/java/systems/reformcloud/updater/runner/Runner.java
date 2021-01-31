@@ -35,12 +35,11 @@ import systems.reformcloud.updater.config.RunnerConfiguration;
 @FunctionalInterface
 public interface Runner {
 
-    void run(@NotNull RunnerConfiguration configuration);
+  void run(@NotNull RunnerConfiguration configuration);
 
-    /**
-     * Indicates that a runner is provided by default
-     */
-    @ApiStatus.Internal
-    @interface DefaultRunner {
-    }
+  /**
+   * Indicates that a runner is provided by default
+   */
+  @ApiStatus.Internal @interface DefaultRunner {
+  }
 }

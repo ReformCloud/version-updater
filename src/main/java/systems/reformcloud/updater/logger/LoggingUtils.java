@@ -28,21 +28,21 @@ import org.jetbrains.annotations.NotNull;
 
 public final class LoggingUtils {
 
-    private LoggingUtils() {
-        throw new UnsupportedOperationException();
-    }
+  private LoggingUtils() {
+    throw new UnsupportedOperationException();
+  }
 
-    public static void executeSecretly(@NotNull Runnable runnable) {
-        try {
-            runnable.run();
-        } catch (Throwable ignored) {
-            // secret
-        }
+  public static void executeSecretly(@NotNull Runnable runnable) {
+    try {
+      runnable.run();
+    } catch (Throwable ignored) {
+      // secret
     }
+  }
 
-    @FunctionalInterface
-    public interface Runnable {
+  @FunctionalInterface
+  public interface Runnable {
 
-        void run() throws Throwable;
-    }
+    void run() throws Throwable;
+  }
 }

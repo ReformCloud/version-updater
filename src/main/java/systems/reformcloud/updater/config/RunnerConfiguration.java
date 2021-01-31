@@ -28,25 +28,25 @@ import com.google.gson.JsonObject;
 
 public class RunnerConfiguration {
 
-    private final String runnerClass;
-    private final String targetPath;
-    private final JsonObject runnerData;
+  private final String runnerClass;
+  private final String targetPath;
+  private final JsonObject runnerData;
 
-    public RunnerConfiguration(String runnerClass, String targetPath, JsonObject runnerData) {
-        this.runnerClass = runnerClass;
-        this.targetPath = targetPath;
-        this.runnerData = runnerData;
-    }
+  public RunnerConfiguration(String runnerClass, String targetPath, JsonObject runnerData) {
+    this.runnerClass = runnerClass;
+    this.targetPath = targetPath;
+    this.runnerData = runnerData;
+  }
 
-    public String getRunnerClass() {
-        return runnerClass;
-    }
+  public String getRunnerClass() {
+    return runnerClass;
+  }
 
-    public String getTargetPath() {
-        return targetPath;
-    }
+  public String getTargetPath() {
+    return targetPath;
+  }
 
-    public JsonObject getRunnerData() {
-        return runnerData;
-    }
+  public JsonObject getRunnerData() {
+    return runnerData;
+  }
 }

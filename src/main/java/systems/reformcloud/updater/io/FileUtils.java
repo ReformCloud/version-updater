@@ -34,62 +34,62 @@ import java.nio.file.Path;
 
 public final class FileUtils {
 
-    private FileUtils() {
-        throw new UnsupportedOperationException();
+  private FileUtils() {
+    throw new UnsupportedOperationException();
+  }
+
+  public static void delete(@NotNull Path directoryPath) {
+    if (Files.notExists(directoryPath)) {
+      return;
     }
 
-    public static void delete(@NotNull Path directoryPath) {
-        if (Files.notExists(directoryPath)) {
-            return;
-        }
+    if (Files.isDirectory(directoryPath)) {
+      deleteDirectory0(directoryPath);
+    } else {
+      deleteFile0(directoryPath);
+    }
+  }
 
-        if (Files.isDirectory(directoryPath)) {
-            deleteDirectory0(directoryPath);
-        } else {
-            deleteFile0(directoryPath);
-        }
+  public static void copy(@NotNull Path file, @NotNull String target) {
+    if (Files.notExists(file) || Files.isDirectory(file)) {
+      return;
     }
 
-    public static void copy(@NotNull Path file, @NotNull String target) {
-        if (Files.notExists(file) || Files.isDirectory(file)) {
-            return;
-        }
-
-        Path targetPath = Path.of(target);
-        if (Files.exists(targetPath)) {
-            delete(targetPath);
-        }
-
-        if (targetPath.getParent() != null && Files.notExists(targetPath.getParent())) {
-            LoggingUtils.executeSecretly(() -> Files.createDirectories(targetPath.getParent()));
-        }
-
-        try (var out = Files.newOutputStream(targetPath)) {
-            Files.copy(file, out);
-        } catch (IOException exception) {
-            exception.printStackTrace();
-        }
+    Path targetPath = Path.of(target);
+    if (Files.exists(targetPath)) {
+      delete(targetPath);
     }
 
-    private static void deleteFile0(@NotNull Path path) {
-        LoggingUtils.executeSecretly(() -> Files.deleteIfExists(path));
+    if (targetPath.getParent() != null && Files.notExists(targetPath.getParent())) {
+      LoggingUtils.executeSecretly(() -> Files.createDirectories(targetPath.getParent()));
     }
 
-    private static void deleteDirectory0(@NotNull Path directoryPath) {
-        LoggingUtils.executeSecretly(() -> {
-            try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(directoryPath)) {
-                for (Path path : directoryStream) {
-                    if (Files.isDirectory(path)) {
-                        deleteDirectory0(path);
-                    } else {
-                        deleteFile0(path);
-                    }
-                }
-            } catch (IOException exception) {
-                exception.printStackTrace();
-            }
-
-            deleteFile0(directoryPath);
-        });
+    try (var out = Files.newOutputStream(targetPath)) {
+      Files.copy(file, out);
+    } catch (IOException exception) {
+      exception.printStackTrace();
     }
+  }
+
+  private static void deleteFile0(@NotNull Path path) {
+    LoggingUtils.executeSecretly(() -> Files.deleteIfExists(path));
+  }
+
+  private static void deleteDirectory0(@NotNull Path directoryPath) {
+    LoggingUtils.executeSecretly(() -> {
+      try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(directoryPath)) {
+        for (Path path : directoryStream) {
+          if (Files.isDirectory(path)) {
+            deleteDirectory0(path);
+          } else {
+            deleteFile0(path);
+          }
+        }
+      } catch (IOException exception) {
+        exception.printStackTrace();
+      }
+
+      deleteFile0(directoryPath);
+    });
+  }
 }

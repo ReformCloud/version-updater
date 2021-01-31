@@ -24,39 +24,34 @@
  */
 package systems.reformcloud.updater.impl;
 
+import com.google.gson.reflect.TypeToken;
 import org.jetbrains.annotations.NotNull;
+import systems.reformcloud.updater.Constants;
 import systems.reformcloud.updater.config.RunnerConfiguration;
 import systems.reformcloud.updater.http.HttpUtils;
-import systems.reformcloud.updater.io.FileUtils;
 import systems.reformcloud.updater.runner.Runner;
 
-import java.io.IOException;
-import java.nio.file.Path;
+import java.lang.reflect.Type;
+import java.util.Set;
 
-@Runner.DefaultRunner
-public class PaperClipRunner implements Runner {
+public class PaperApiDownloaderRunner implements Runner {
+
+  private static final String VERSION_LIST_URL = "https://papermc.io/api/v2/projects/%s/versions/%s";
+  private static final String DOWNLOAD_URL = "https://papermc.io/api/v2/projects/%s/versions/%s/builds/%d/downloads/%s-%s-%d.jar";
+  private static final Type INT_SET_TYPE = TypeToken.getParameterized(Set.class, Integer.class).getType();
 
   @Override
   public void run(@NotNull RunnerConfiguration configuration) {
-    var executingPath = Path.of(PaperClipRunner.class.getSimpleName() + "-" + System.nanoTime());
-    var downloadUrl = configuration.getRunnerData().get("downloadUrl").getAsString();
-    var copy = configuration.getRunnerData().get("copy").getAsString();
+    var versionGroup = configuration.getRunnerData().get("versionGroup").getAsString();
+    var projectName = configuration.getRunnerData().get("projectName").getAsString();
 
-    HttpUtils.download(downloadUrl, executingPath.resolve("run.jar"));
-
-    try {
-      var process = new ProcessBuilder()
-        .command("java", "-jar", "run.jar")
-        .directory(executingPath.toFile())
-        .inheritIO()
-        .start();
-      process.waitFor();
-      process.destroyForcibly();
-
-      FileUtils.copy(executingPath.resolve(copy), configuration.getTargetPath());
-      FileUtils.delete(executingPath);
-    } catch (IOException | InterruptedException exception) {
-      exception.printStackTrace();
+    var object = HttpUtils.makeRequest(String.format(VERSION_LIST_URL, projectName, versionGroup));
+    if (object != null && object.has("builds")) {
+      Set<Integer> builds = Constants.GSON.get().fromJson(object.get("builds"), INT_SET_TYPE);
+      builds.stream().reduce(Math::max).ifPresent(buildNumber -> HttpUtils.download(
+        String.format(DOWNLOAD_URL, projectName, versionGroup, buildNumber, projectName, versionGroup, buildNumber),
+        configuration.getTargetPath()
+      ));
     }
   }
 }

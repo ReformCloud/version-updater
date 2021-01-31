@@ -36,28 +36,28 @@ import java.nio.file.Path;
 @Runner.DefaultRunner
 public class BuildToolsRunner implements Runner {
 
-    @Override
-    public void run(@NotNull RunnerConfiguration configuration) {
-        var executingPath = Path.of(BuildToolsRunner.class.getSimpleName() + "-" + System.nanoTime());
-        var downloadUrl = configuration.getRunnerData().get("downloadUrl").getAsString();
-        var copy = configuration.getRunnerData().get("copy").getAsString();
-        var rev = configuration.getRunnerData().get("rev").getAsString();
+  @Override
+  public void run(@NotNull RunnerConfiguration configuration) {
+    var executingPath = Path.of(BuildToolsRunner.class.getSimpleName() + "-" + System.nanoTime());
+    var downloadUrl = configuration.getRunnerData().get("downloadUrl").getAsString();
+    var copy = configuration.getRunnerData().get("copy").getAsString();
+    var rev = configuration.getRunnerData().get("rev").getAsString();
 
-        HttpUtils.download(downloadUrl, executingPath.resolve("run.jar"));
+    HttpUtils.download(downloadUrl, executingPath.resolve("run.jar"));
 
-        try {
-            var process = new ProcessBuilder()
-                    .command("java", "-jar", "run.jar", "--rev", rev)
-                    .directory(executingPath.toFile())
-                    .inheritIO()
-                    .start();
-            process.waitFor();
-            process.destroyForcibly();
+    try {
+      var process = new ProcessBuilder()
+        .command("java", "-jar", "run.jar", "--rev", rev)
+        .directory(executingPath.toFile())
+        .inheritIO()
+        .start();
+      process.waitFor();
+      process.destroyForcibly();
 
-            FileUtils.copy(executingPath.resolve(copy), configuration.getTargetPath());
-            FileUtils.delete(executingPath);
-        } catch (IOException | InterruptedException exception) {
-            throw new RuntimeException(exception);
-        }
+      FileUtils.copy(executingPath.resolve(copy), configuration.getTargetPath());
+      FileUtils.delete(executingPath);
+    } catch (IOException | InterruptedException exception) {
+      throw new RuntimeException(exception);
     }
+  }
 }

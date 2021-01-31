@@ -40,83 +40,69 @@ import java.util.concurrent.ExecutorService;
 
 public class VersionUpdaterConfiguration {
 
-    public static void loadAndRun(@NotNull ExecutorService executor) {
-        var configPath = Path.of("config.json");
-        if (Files.notExists(configPath)) {
-            Documents.newDocument().append("runners", Arrays.asList(
-                    new RunnerConfiguration(
-                            "systems.reformcloud.updater.impl.BuildToolsRunner",
-                            "final/spigot-1.16.2.jar",
-                            createBuildToolsRunnerData()
-                    ),
-                    new RunnerConfiguration(
-                            "systems.reformcloud.updater.impl.PaperClipRunner",
-                            "final/paper-1.16.1.jar",
-                            createPaperClipRunnerData()
-                    ),
-                    new RunnerConfiguration(
-                            "systems.reformcloud.updater.impl.JenkinsRunner",
-                            "final/velocity-{0}.jar",
-                            createJenkinsRunnerData()
-                    )
-            )).json().write(configPath);
+  public static void loadAndRun(@NotNull ExecutorService executor) {
+    var configPath = Path.of("config.json");
+    if (Files.notExists(configPath)) {
+      Documents.newDocument().append("runners", Arrays.asList(
+        new RunnerConfiguration(
+          "systems.reformcloud.updater.impl.BuildToolsRunner",
+          "final/spigot-1.16.5.jar",
+          createBuildToolsRunnerData()
+        ),
+        new RunnerConfiguration(
+          "systems.reformcloud.updater.impl.PaperClipDownloadsApiRunner",
+          "final/paper-1.16.5.jar",
+          createPaperClipDownloadsApiRunnerData()
+        )
+      )).json().write(configPath);
 
-            System.out.println("Please fill the settings and restart");
-            return;
-        }
-
-        Collection<RunnerConfiguration> configurations = Documents.jsonStorage().read(configPath).get("runners", TypeToken.getParameterized(Collection.class, RunnerConfiguration.class).getType());
-        System.out.println("Loaded " + configurations.size() + " configurations...");
-
-        for (var configuration : configurations) {
-            Runner runner = tryLoadRunner(configuration.getRunnerClass());
-            if (runner == null) {
-                System.err.println("Unable to load runner: " + configuration.getRunnerClass());
-                continue;
-            }
-
-            executor.submit(() -> {
-                System.out.println("Executing runner task: " + configuration.getRunnerClass());
-                runner.run(configuration);
-            });
-        }
+      System.out.println("Please fill the settings and restart");
+      return;
     }
 
-    private static @NotNull JsonObject createBuildToolsRunnerData() {
-        JsonObject jsonObject = new JsonObject();
+    Collection<RunnerConfiguration> configurations = Documents.jsonStorage().read(configPath).get("runners", TypeToken.getParameterized(Collection.class, RunnerConfiguration.class).getType());
+    System.out.println("Loaded " + configurations.size() + " configurations...");
 
-        jsonObject.addProperty("downloadUrl", "https://hub.spigotmc.org/jenkins/job/BuildTools/115/artifact/target/BuildTools.jar");
-        jsonObject.addProperty("copy", "spigot-1.16.2.jar");
-        jsonObject.addProperty("rev", "1.16.2");
+    for (var configuration : configurations) {
+      Runner runner = tryLoadRunner(configuration.getRunnerClass());
+      if (runner == null) {
+        System.err.println("Unable to load runner: " + configuration.getRunnerClass());
+        continue;
+      }
 
-        return jsonObject;
+      executor.submit(() -> {
+        System.out.println("Executing runner task: " + configuration.getRunnerClass());
+        runner.run(configuration);
+      });
     }
+  }
 
-    private static @NotNull JsonObject createPaperClipRunnerData() {
-        JsonObject jsonObject = new JsonObject();
+  private static @NotNull JsonObject createBuildToolsRunnerData() {
+    JsonObject jsonObject = new JsonObject();
 
-        jsonObject.addProperty("downloadUrl", "https://papermc.io/ci/job/Paper-1.16/lastSuccessfulBuild/artifact/paperclip.jar");
-        jsonObject.addProperty("copy", "cache/patched_1.16.1.jar");
+    jsonObject.addProperty("downloadUrl", "https://hub.spigotmc.org/jenkins/job/BuildTools/115/artifact/target/BuildTools.jar");
+    jsonObject.addProperty("copy", "spigot-1.16.2.jar");
+    jsonObject.addProperty("rev", "1.16.2");
 
-        return jsonObject;
+    return jsonObject;
+  }
+
+  private static @NotNull JsonObject createPaperClipDownloadsApiRunnerData() {
+    JsonObject jsonObject = new JsonObject();
+
+    jsonObject.addProperty("versionGroup", "1.16");
+    jsonObject.addProperty("projectName", "paper");
+    jsonObject.addProperty("copy", "cache/patched_1.16.5.jar");
+
+    return jsonObject;
+  }
+
+  private static @Nullable Runner tryLoadRunner(@NotNull String clazz) {
+    try {
+      Class<?> runnerClass = Class.forName(clazz);
+      return (Runner) runnerClass.getDeclaredConstructor().newInstance();
+    } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | IllegalAccessException | InstantiationException | ClassCastException exception) {
+      return null;
     }
-
-    private static @NotNull JsonObject createJenkinsRunnerData() {
-        JsonObject jsonObject = new JsonObject();
-
-        jsonObject.addProperty("jobUrl", "https://ci.velocitypowered.com/job/velocity-1.1.0");
-        jsonObject.addProperty("rev", "lastSuccessfulBuild");
-        jsonObject.addProperty("pattern", "velocity-proxy-(.*)-SNAPSHOT-all.jar");
-
-        return jsonObject;
-    }
-
-    private static @Nullable Runner tryLoadRunner(@NotNull String clazz) {
-        try {
-            Class<?> runnerClass = Class.forName(clazz);
-            return (Runner) runnerClass.getDeclaredConstructor().newInstance();
-        } catch (ClassNotFoundException | NoSuchMethodException | InvocationTargetException | IllegalAccessException | InstantiationException | ClassCastException exception) {
-            return null;
-        }
-    }
+  }
 }
